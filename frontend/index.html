@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="hr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Gradski prijevoz – Admin</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="brand">Gradski prijevoz</div>
+        <div class="muted">Admin panel</div>
+
+        <div class="sidebar__section">
+          <div class="sidebar__title">Tablice</div>
+          <nav id="nav"></nav>
+        </div>
+
+        <div class="sidebar__section">
+          <button id="refresh" class="btn">Refresh</button>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div class="topbar__left">
+            <h1 id="title">Odaberi tablicu</h1>
+            <div class="muted" id="meta"></div>
+          </div>
+
+          <div class="topbar__right">
+            <input id="search" class="input" placeholder="Search..." />
+            <button id="new" class="btn btn--primary" disabled>+ Novi</button>
+          </div>
+        </header>
+
+        <section class="content">
+          <div id="error" class="error hidden"></div>
+
+          <div class="tableWrap">
+            <table class="table">
+              <thead id="thead"></thead>
+              <tbody id="tbody"></tbody>
+            </table>
+          </div>
+
+          <div class="pager">
+            <button id="prev" class="btn" disabled>Prev</button>
+            <div class="muted" id="pagerInfo"></div>
+            <button id="next" class="btn" disabled>Next</button>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="modal" class="modal">
+      <form id="form" method="dialog" class="modal__card">
+        <div class="modal__head">
+          <div class="modal__title" id="modalTitle">Edit</div>
+          <button class="btn" value="cancel">X</button>
+        </div>
+
+        <div id="fields" class="fields"></div>
+
+        <div class="modal__actions">
+          <button id="delete" class="btn btn--danger hidden" type="button">Delete</button>
+          <div class="spacer"></div>
+          <button class="btn" value="cancel">Cancel</button>
+          <button id="save" class="btn btn--primary" value="default">Save</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
