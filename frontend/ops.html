@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="hr">
   <head>
     <meta charset="utf-8" />
@@ -62,6 +62,75 @@
             <div class="card__title">Definirani polasci</div>
             <div class="card__value" id="dPolasciUkupno">—</div>
             <div class="card__meta muted">ukupno zapisa u voznom redu</div>
+          </div>
+        </div>
+
+        <!-- PIE CHARTOVI (vizualni dashboard) -->
+        <div class="charts">
+          <div class="chartCard">
+            <div class="chartCard__head">
+              <div class="chartCard__title">Vozila (promet)</div>
+              <div class="muted">U prometu vs van prometa</div>
+            </div>
+
+            <div class="chartRow">
+              <div class="pie" id="pieVehicles" aria-label="Pie vozila"></div>
+
+              <ul class="legend" aria-label="Legenda vozila">
+                <li>
+                  <span class="dot dot--green"></span>
+                  U prometu: <strong id="pieVehiclesInVal">—</strong>
+                </li>
+                <li>
+                  <span class="dot dot--gray"></span>
+                  Van prometa: <strong id="pieVehiclesOutVal">—</strong>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="chartCard">
+            <div class="chartCard__head">
+              <div class="chartCard__title">Pritužbe (aktivne)</div>
+              <div class="muted">Novo vs u obradi</div>
+            </div>
+
+            <div class="chartRow">
+              <div class="pie" id="pieComplaints" aria-label="Pie pritužbe"></div>
+
+              <ul class="legend" aria-label="Legenda pritužbe">
+                <li>
+                  <span class="dot dot--blue"></span>
+                  Novo: <strong id="pieComplaintsNewVal">—</strong>
+                </li>
+                <li>
+                  <span class="dot dot--orange"></span>
+                  U obradi: <strong id="pieComplaintsInVal">—</strong>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="chartCard">
+            <div class="chartCard__head">
+              <div class="chartCard__title">Prekršaji (nepodmireni)</div>
+              <div class="muted">Neplaćeno vs u postupku</div>
+            </div>
+
+            <div class="chartRow">
+              <div class="pie" id="pieFines" aria-label="Pie prekršaji"></div>
+
+              <ul class="legend" aria-label="Legenda prekršaji">
+                <li>
+                  <span class="dot dot--red"></span>
+                  Neplaćeno: <strong id="pieFinesUnpaidVal">—</strong>
+                </li>
+                <li>
+                  <span class="dot dot--orange"></span>
+                  U postupku: <strong id="pieFinesProcessVal">—</strong>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       </section>

@@ -57,6 +57,80 @@ function truncate(s, n = 80) {
   return t.slice(0, n - 1) + '…';
 }
 
+/* ===== Pie charts (CSS conic-gradient) ===== */
+function setPie(pieId, segments) {
+  const pie = el(pieId);
+  if (!pie) return;
+
+  const safe = (v) => {
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  };
+
+  const segs = segments.map((s) => ({
+    value: safe(s.value),
+    color: s.color,
+  }));
+
+  const total = segs.reduce((a, s) => a + s.value, 0);
+
+  if (total <= 0) {
+    pie.style.background = 'conic-gradient(#334155 0 100%)';
+    return;
+  }
+
+  let acc = 0;
+  const parts = segs.map((s) => {
+    const start = acc;
+    const pct = (s.value / total) * 100;
+    acc += pct;
+    return `${s.color} ${start}% ${acc}%`;
+  });
+
+  pie.style.background = `conic-gradient(${parts.join(',')})`;
+}
+
+function updateDashboardPies(d) {
+  const inPromet = Number(d.vozila?.u_prometu ?? 0);
+  const vanPrometa = Number(d.vozila?.van_prometa ?? 0);
+
+  const novo = Number(d.complaints?.novo ?? 0);
+  const uObradi = Number(d.complaints?.u_obradi ?? 0);
+
+  const neplaceno = Number(d.fines?.neplaceno ?? 0);
+  const uPostupku = Number(d.fines?.u_postupku ?? 0);
+
+  const vehiclesInVal = el('pieVehiclesInVal');
+  const vehiclesOutVal = el('pieVehiclesOutVal');
+  if (vehiclesInVal) vehiclesInVal.textContent = String(inPromet);
+  if (vehiclesOutVal) vehiclesOutVal.textContent = String(vanPrometa);
+
+  const cNewVal = el('pieComplaintsNewVal');
+  const cInVal = el('pieComplaintsInVal');
+  if (cNewVal) cNewVal.textContent = String(novo);
+  if (cInVal) cInVal.textContent = String(uObradi);
+
+  const fUnpaidVal = el('pieFinesUnpaidVal');
+  const fProcVal = el('pieFinesProcessVal');
+  if (fUnpaidVal) fUnpaidVal.textContent = String(neplaceno);
+  if (fProcVal) fProcVal.textContent = String(uPostupku);
+
+  setPie('pieVehicles', [
+    { value: inPromet, color: '#22c55e' },
+    { value: vanPrometa, color: '#64748b' },
+  ]);
+
+  setPie('pieComplaints', [
+    { value: novo, color: '#3b82f6' },
+    { value: uObradi, color: '#f59e0b' },
+  ]);
+
+  setPie('pieFines', [
+    { value: neplaceno, color: '#ef4444' },
+    { value: uPostupku, color: '#f59e0b' },
+  ]);
+}
+
 function wireTabs() {
   const tabs = Array.from(document.querySelectorAll('.tab'));
   tabs.forEach((t) => {
@@ -72,6 +146,7 @@ function wireTabs() {
 
 async function loadDashboard() {
   const d = await api('/ops/dashboard');
+
   el('dVozilaPromet').textContent = String(d.vozila?.u_prometu ?? 0);
   el('dVozilaMeta').textContent = `Van prometa: ${d.vozila?.van_prometa ?? 0} / Ukupno: ${d.vozila?.ukupno ?? 0}`;
 
@@ -85,6 +160,8 @@ async function loadDashboard() {
 
   el('dServisiMjesec').textContent = String(d.services?.ovaj_mjesec ?? 0);
   el('dPolasciUkupno').textContent = String(d.timetable?.ukupno_polazaka ?? 0);
+
+  updateDashboardPies(d);
 }
 
 async function loadLines() {
@@ -318,7 +395,6 @@ async function loadFines() {
 }
 
 function wireAutoReload() {
-  // Vozni red: odmah na promjenu linije
   el('lineSelect').addEventListener('change', async () => {
     clearError();
     try {
@@ -328,7 +404,6 @@ function wireAutoReload() {
     }
   });
 
-  // Pritužbe: odmah na promjenu filtera
   ['cStatus', 'cCategory', 'cLine'].forEach((id) => {
     el(id).addEventListener('change', async () => {
       clearError();
@@ -341,7 +416,6 @@ function wireAutoReload() {
     });
   });
 
-  // Održavanje: odmah na promjenu filtera (select + date inputs)
   ['mType', 'mFrom', 'mTo'].forEach((id) => {
     el(id).addEventListener('change', async () => {
       clearError();
@@ -353,7 +427,6 @@ function wireAutoReload() {
     });
   });
 
-  // Prekršaji: odmah na promjenu filtera (select + datetime inputs)
   ['fStatus', 'fFrom', 'fTo'].forEach((id) => {
     el(id).addEventListener('change', async () => {
       clearError();
@@ -380,7 +453,6 @@ async function init() {
     }
   };
 
-  // gumbi i dalje postoje, ali više nisu nužni
   el('loadTimetable').onclick = async () => {
     clearError();
     try {
