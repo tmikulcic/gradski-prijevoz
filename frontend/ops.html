@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="hr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Gradski prijevoz – Operativni panel</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./ops.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar__left">
+        <div class="brand">Gradski prijevoz</div>
+        <div class="muted">Operativni panel</div>
+      </div>
+
+      <div class="topbar__right">
+        <a class="btn" href="./index.html">Admin CRUD</a>
+        <button id="refreshAll" class="btn btn--primary" type="button">Osvježi</button>
+      </div>
+    </header>
+
+    <main class="ops">
+      <section id="error" class="error hidden"></section>
+
+      <nav class="tabs">
+        <button class="tab active" data-tab="dashboard" type="button">Dashboard</button>
+        <button class="tab" data-tab="timetable" type="button">Vozni red</button>
+        <button class="tab" data-tab="complaints" type="button">Pritužbe</button>
+        <button class="tab" data-tab="maintenance" type="button">Održavanje</button>
+        <button class="tab" data-tab="fines" type="button">Prekršaji</button>
+      </nav>
+
+      <section class="panel" id="panel-dashboard">
+        <div class="panel__head">
+          <div class="panel__title">Pregled sustava</div>
+          <div class="panel__hint muted">Brzi uvid u najvažnije brojke</div>
+        </div>
+
+        <div class="cards">
+          <div class="card">
+            <div class="card__title">Vozila u prometu</div>
+            <div class="card__value" id="dVozilaPromet">—</div>
+            <div class="card__meta muted" id="dVozilaMeta">—</div>
+          </div>
+          <div class="card">
+            <div class="card__title">Nove pritužbe</div>
+            <div class="card__value" id="dPrituzbeNovo">—</div>
+            <div class="card__meta muted" id="dPrituzbeMeta">—</div>
+          </div>
+          <div class="card">
+            <div class="card__title">Neplaćeni prekršaji</div>
+            <div class="card__value" id="dKazneNeplac">—</div>
+            <div class="card__meta muted" id="dKazneMeta">—</div>
+          </div>
+          <div class="card">
+            <div class="card__title">Servisi ovaj mjesec</div>
+            <div class="card__value" id="dServisiMjesec">—</div>
+            <div class="card__meta muted">iz tablice održavanja</div>
+          </div>
+          <div class="card">
+            <div class="card__title">Definirani polasci</div>
+            <div class="card__value" id="dPolasciUkupno">—</div>
+            <div class="card__meta muted">ukupno zapisa u voznom redu</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel hidden" id="panel-timetable">
+        <div class="panel__head">
+          <div class="panel__title">Vozni red (read-only)</div>
+          <div class="panel__actions">
+            <label class="field">
+              <span class="muted">Linija</span>
+              <select id="lineSelect" class="input"></select>
+            </label>
+            <button id="loadTimetable" class="btn btn--primary" type="button">Prikaži</button>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div class="box">
+            <div class="box__title">Polasci</div>
+            <div class="tableWrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Vrijeme</th>
+                    <th>Tip vozila</th>
+                    <th>Kalendar</th>
+                  </tr>
+                </thead>
+                <tbody id="timetableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="box">
+            <div class="box__title">Stanice na liniji</div>
+            <div class="tableWrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Stanica</th>
+                    <th>Zona</th>
+                  </tr>
+                </thead>
+                <tbody id="stopsBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel hidden" id="panel-complaints">
+        <div class="panel__head">
+          <div class="panel__title">Pritužbe</div>
+          <div class="panel__actions">
+            <label class="field">
+              <span class="muted">Status</span>
+              <select id="cStatus" class="input">
+                <option value="">Sve</option>
+                <option value="Novo">Novo</option>
+                <option value="U obradi">U obradi</option>
+                <option value="Riješeno">Riješeno</option>
+                <option value="Odbačeno">Odbačeno</option>
+              </select>
+            </label>
+            <label class="field">
+              <span class="muted">Kategorija</span>
+              <select id="cCategory" class="input">
+                <option value="">Sve</option>
+                <option value="Kašnjenje">Kašnjenje</option>
+                <option value="Ponašanje osoblja">Ponašanje osoblja</option>
+                <option value="Čistoća">Čistoća</option>
+                <option value="Kvar vozila">Kvar vozila</option>
+                <option value="Ostalo">Ostalo</option>
+              </select>
+            </label>
+            <label class="field">
+              <span class="muted">Linija</span>
+              <select id="cLine" class="input"></select>
+            </label>
+            <button id="loadComplaints" class="btn btn--primary" type="button">Traži</button>
+          </div>
+        </div>
+
+        <div class="tableWrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Datum</th>
+                <th>Linija</th>
+                <th>Kategorija</th>
+                <th>Korisnik</th>
+                <th>Status</th>
+                <th>Tekst</th>
+                <th>Akcija</th>
+              </tr>
+            </thead>
+            <tbody id="complaintsBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel hidden" id="panel-maintenance">
+        <div class="panel__head">
+          <div class="panel__title">Održavanje vozila</div>
+          <div class="panel__actions">
+            <label class="field">
+              <span class="muted">Vrsta servisa</span>
+              <select id="mType" class="input">
+                <option value="">Sve</option>
+                <option value="Redovni">Redovni</option>
+                <option value="Izvanredni">Izvanredni</option>
+                <option value="Tehnički pregled">Tehnički pregled</option>
+                <option value="Popravak kvar">Popravak kvar</option>
+              </select>
+            </label>
+            <label class="field">
+              <span class="muted">Od</span>
+              <input id="mFrom" class="input" type="date" />
+            </label>
+            <label class="field">
+              <span class="muted">Do</span>
+              <input id="mTo" class="input" type="date" />
+            </label>
+            <button id="loadMaintenance" class="btn btn--primary" type="button">Traži</button>
+            <button id="openAddMaintenance" class="btn" type="button">+ Novi servis</button>
+          </div>
+        </div>
+
+        <div class="tableWrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Datum</th>
+                <th>Vozilo</th>
+                <th>Servis</th>
+                <th>Trošak</th>
+                <th>Mehaničar</th>
+                <th>Opis</th>
+              </tr>
+            </thead>
+            <tbody id="maintenanceBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel hidden" id="panel-fines">
+        <div class="panel__head">
+          <div class="panel__title">Prekršaji</div>
+          <div class="panel__actions">
+            <label class="field">
+              <span class="muted">Status</span>
+              <select id="fStatus" class="input">
+                <option value="">Svi</option>
+                <option value="Neplaćeno">Neplaćeno</option>
+                <option value="U postupku">U postupku</option>
+                <option value="Plaćeno">Plaćeno</option>
+              </select>
+            </label>
+            <label class="field">
+              <span class="muted">Od</span>
+              <input id="fFrom" class="input" type="datetime-local" />
+            </label>
+            <label class="field">
+              <span class="muted">Do</span>
+              <input id="fTo" class="input" type="datetime-local" />
+            </label>
+            <button id="loadFines" class="btn btn--primary" type="button">Traži</button>
+          </div>
+        </div>
+
+        <div class="tableWrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Datum</th>
+                <th>Korisnik</th>
+                <th>Iznos</th>
+                <th>Status</th>
+                <th>Napomena</th>
+                <th>Akcija</th>
+              </tr>
+            </thead>
+            <tbody id="finesBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <dialog id="maintenanceModal" class="modal">
+      <form class="modal__card" method="dialog">
+        <div class="modal__head">
+          <div class="modal__title">Novi servis</div>
+          <button class="btn" value="cancel" type="submit">X</button>
+        </div>
+
+        <div class="fieldsGrid">
+          <label class="field">
+            <span class="muted">Vozilo</span>
+            <select id="amVehicle" class="input"></select>
+          </label>
+
+          <label class="field">
+            <span class="muted">Mehaničar</span>
+            <select id="amMechanic" class="input"></select>
+          </label>
+
+          <label class="field">
+            <span class="muted">Datum</span>
+            <input id="amDate" class="input" type="date" />
+          </label>
+
+          <label class="field">
+            <span class="muted">Vrsta servisa</span>
+            <select id="amType" class="input">
+              <option value="Redovni">Redovni</option>
+              <option value="Izvanredni">Izvanredni</option>
+              <option value="Tehnički pregled">Tehnički pregled</option>
+              <option value="Popravak kvar">Popravak kvar</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span class="muted">Trošak (€)</span>
+            <input id="amCost" class="input" type="number" min="0" step="0.01" placeholder="0.00" />
+          </label>
+
+          <label class="field field--full">
+            <span class="muted">Opis (opcionalno)</span>
+            <textarea id="amDesc" class="input" rows="3" placeholder="Kratko opiši radove..."></textarea>
+          </label>
+        </div>
+
+        <div class="modal__actions">
+          <button class="btn" value="cancel" type="submit">Cancel</button>
+          <button id="saveMaintenance" class="btn btn--primary" type="button">Spremi</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script src="./ops.js"></script>
+  </body>
+</html>

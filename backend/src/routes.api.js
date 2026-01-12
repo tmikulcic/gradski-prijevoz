@@ -1,6 +1,7 @@
 import express from "express";
 import { crudRouter } from "./routes.crud.js";
 import { linijeStaniceRouter } from "./routes.linijeStanice.js";
+import { opsRouter } from "./routes.ops.js";
 import { TABLES } from "./config.tables.js";
 
 export const apiRouter = express.Router();
@@ -16,3 +17,5 @@ apiRouter.get("/tables", (req, res) => {
 
 apiRouter.use("/crud", crudRouter);
 apiRouter.use("/linije-stanice", linijeStaniceRouter);
+
+apiRouter.use("/ops", opsRouter);
