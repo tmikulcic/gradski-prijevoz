@@ -15,7 +15,6 @@
       </div>
 
       <div class="topbar__right">
-        <a class="btn" href="./index.html">Admin CRUD</a>
         <button id="refreshAll" class="btn btn--primary" type="button">Osvježi</button>
       </div>
     </header>
@@ -33,108 +32,108 @@
 
       <section class="panel" id="panel-dashboard">
         <div class="panel__head">
-          <div class="panel__title">Pregled sustava</div>
-          <div class="panel__hint muted">Brzi uvid u najvažnije brojke</div>
-        </div>
+          <div>
+            <div class="panel__title">Dashboard</div>
+            <div class="panel__hint muted">Sažetak ključnih pokazatelja (bez suvišnih detalja)</div>
+          </div>
 
-        <div class="cards">
-          <div class="card">
-            <div class="card__title">Vozila u prometu</div>
-            <div class="card__value" id="dVozilaPromet">—</div>
-            <div class="card__meta muted" id="dVozilaMeta">—</div>
-          </div>
-          <div class="card">
-            <div class="card__title">Nove pritužbe</div>
-            <div class="card__value" id="dPrituzbeNovo">—</div>
-            <div class="card__meta muted" id="dPrituzbeMeta">—</div>
-          </div>
-          <div class="card">
-            <div class="card__title">Neplaćeni prekršaji</div>
-            <div class="card__value" id="dKazneNeplac">—</div>
-            <div class="card__meta muted" id="dKazneMeta">—</div>
-          </div>
-          <div class="card">
-            <div class="card__title">Servisi ovaj mjesec</div>
-            <div class="card__value" id="dServisiMjesec">—</div>
-            <div class="card__meta muted">iz tablice održavanja</div>
-          </div>
-          <div class="card">
-            <div class="card__title">Definirani polasci</div>
-            <div class="card__value" id="dPolasciUkupno">—</div>
-            <div class="card__meta muted">ukupno zapisa u voznom redu</div>
+          <div class="panel__actions">
+            <div class="kpi">
+              <div class="kpi__label muted">Vozila u prometu</div>
+              <div class="kpi__value" id="kpiVehiclesInTraffic">—</div>
+              <div class="kpi__sub muted" id="kpiVehiclesMeta">—</div>
+            </div>
           </div>
         </div>
 
-        <!-- PIE CHARTOVI (vizualni dashboard) -->
-        <div class="charts">
-          <div class="chartCard">
-            <div class="chartCard__head">
-              <div class="chartCard__title">Vozila (promet)</div>
-              <div class="muted">U prometu vs van prometa</div>
-            </div>
+        <div class="dashGrid">
+          <div class="dashBlock">
+            <div class="dashBlock__title">Flota</div>
 
-            <div class="chartRow">
-              <div class="pie" id="pieVehicles" aria-label="Pie vozila"></div>
-
-              <ul class="legend" aria-label="Legenda vozila">
-                <li>
-                  <span class="dot dot--green"></span>
-                  U prometu: <strong id="pieVehiclesInVal">—</strong>
-                </li>
-                <li>
-                  <span class="dot dot--gray"></span>
-                  Van prometa: <strong id="pieVehiclesOutVal">—</strong>
-                </li>
-              </ul>
+            <div class="chartCard">
+              <div class="chartCard__head">
+                <div class="chartCard__title">Vozila po gorivu</div>
+              </div>
+              <div class="chartRow">
+                <div class="pie" id="pieVehiclesFuel"></div>
+                <div class="legend" id="legendVehiclesFuel"></div>
+              </div>
             </div>
           </div>
 
-          <div class="chartCard">
-            <div class="chartCard__head">
-              <div class="chartCard__title">Pritužbe (aktivne)</div>
-              <div class="muted">Novo vs u obradi</div>
+          <div class="dashBlock">
+            <div class="dashBlock__title">Korisnici</div>
+
+            <div class="chartCard">
+              <div class="chartCard__head">
+                <div class="chartCard__title">Pritužbe po statusu</div>
+              </div>
+              <div class="chartRow">
+                <div class="pie" id="pieComplaintsStatus"></div>
+                <div class="legend" id="legendComplaintsStatus"></div>
+              </div>
             </div>
 
-            <div class="chartRow">
-              <div class="pie" id="pieComplaints" aria-label="Pie pritužbe"></div>
+            <div class="chartCard">
+              <div class="chartCard__head">
+                <div class="chartCard__title">Pritužbe po kategoriji</div>
+              </div>
+              <div class="chartRow">
+                <div class="pie" id="pieComplaintsCategory"></div>
+                <div class="legend" id="legendComplaintsCategory"></div>
+              </div>
+            </div>
 
-              <ul class="legend" aria-label="Legenda pritužbe">
-                <li>
-                  <span class="dot dot--blue"></span>
-                  Novo: <strong id="pieComplaintsNewVal">—</strong>
-                </li>
-                <li>
-                  <span class="dot dot--orange"></span>
-                  U obradi: <strong id="pieComplaintsInVal">—</strong>
-                </li>
-              </ul>
+            <div class="chartCard">
+              <div class="chartCard__head">
+                <div class="chartCard__title">Prekršaji po statusu</div>
+              </div>
+              <div class="chartRow">
+                <div class="pie" id="pieFinesStatus"></div>
+                <div class="legend" id="legendFinesStatus"></div>
+              </div>
             </div>
           </div>
 
-          <div class="chartCard">
-            <div class="chartCard__head">
-              <div class="chartCard__title">Prekršaji (nepodmireni)</div>
-              <div class="muted">Neplaćeno vs u postupku</div>
+          <div class="dashBlock">
+            <div class="dashBlock__title">Operacije</div>
+
+            <div class="chartCard">
+              <div class="chartCard__head">
+                <div class="chartCard__title">Servisi po vrsti</div>
+              </div>
+              <div class="chartRow">
+                <div class="pie" id="pieServicesType"></div>
+                <div class="legend" id="legendServicesType"></div>
+              </div>
             </div>
 
-            <div class="chartRow">
-              <div class="pie" id="pieFines" aria-label="Pie prekršaji"></div>
+            <div class="chartCard">
+              <div class="chartCard__head">
+                <div class="chartCard__title">Zaposlenici po ulozi</div>
+              </div>
+              <div class="chartRow">
+                <div class="pie" id="pieEmployeesRole"></div>
+                <div class="legend" id="legendEmployeesRole"></div>
+              </div>
+            </div>
+          </div>
 
-              <ul class="legend" aria-label="Legenda prekršaji">
-                <li>
-                  <span class="dot dot--red"></span>
-                  Neplaćeno: <strong id="pieFinesUnpaidVal">—</strong>
-                </li>
-                <li>
-                  <span class="dot dot--orange"></span>
-                  U postupku: <strong id="pieFinesProcessVal">—</strong>
-                </li>
-              </ul>
+          <div class="dashBlock">
+            <div class="dashBlock__title">Prodaja</div>
+
+            <div class="chartCard">
+              <div class="chartCard__head">
+                <div class="chartCard__title">Prodane karte po tipu</div>
+              </div>
+              <div class="chartRow">
+                <div class="pie" id="pieTicketsType"></div>
+                <div class="legend" id="legendTicketsType"></div>
+              </div>
             </div>
           </div>
         </div>
       </section>
-
       <section class="panel hidden" id="panel-timetable">
         <div class="panel__head">
           <div class="panel__title">Vozni red (read-only)</div>

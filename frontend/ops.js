@@ -58,6 +58,80 @@ function truncate(s, n = 80) {
 }
 
 /* ===== Pie charts (CSS conic-gradient) ===== */
+
+const PIE_PALETTE = ['#2563eb', '#16a34a', '#f59e0b', '#ef4444', '#64748b', '#a855f7', '#14b8a6', '#f97316'];
+
+function renderPie(pieId, legendId, items) {
+  const pie = el(pieId);
+  const legend = el(legendId);
+  if (!pie || !legend) return;
+
+  const safeItems = (items || [])
+    .map((x, i) => ({
+      label: String(x.label ?? ''),
+      value: Number(x.value ?? 0),
+      color: PIE_PALETTE[i % PIE_PALETTE.length],
+    }))
+    .filter((x) => Number.isFinite(x.value) && x.value > 0);
+
+  const total = safeItems.reduce((a, b) => a + b.value, 0);
+
+  if (!total) {
+    pie.style.background = 'conic-gradient(#e5e7eb 0 100%)';
+    legend.innerHTML = '<div class="muted">Nema podataka</div>';
+    return;
+  }
+
+  let acc = 0;
+  const stops = safeItems.map((s) => {
+    const start = acc;
+    acc += s.value;
+    const from = (start / total) * 100;
+    const to = (acc / total) * 100;
+    return `${s.color} ${from}% ${to}%`;
+  });
+
+  pie.style.background = `conic-gradient(${stops.join(', ')})`;
+
+  legend.innerHTML = safeItems
+    .map((s) => {
+      const p = Math.round((s.value / total) * 100);
+      return `
+        <div class="legendItem">
+          <div class="legendLeft">
+            <span class="dot" style="background:${s.color}"></span>
+            <span class="legendLabel">${s.label}</span>
+          </div>
+          <div class="legendValue">${p}%</div>
+        </div>
+      `;
+    })
+    .join('');
+}
+
+async function loadDashboard() {
+  const d = await api('/ops/dashboard');
+
+  const inTraffic = Number(d.vozila?.u_prometu ?? 0);
+  const total = Number(d.vozila?.ukupno ?? 0);
+  const out = Number(d.vozila?.van_prometa ?? 0);
+
+  const kpi = el('kpiVehiclesInTraffic');
+  if (kpi) kpi.textContent = `${inTraffic} / ${total}`;
+
+  const meta = el('kpiVehiclesMeta');
+  if (meta) meta.textContent = `Van prometa: ${out}`;
+
+  const c = d.charts || {};
+  renderPie('pieVehiclesFuel', 'legendVehiclesFuel', c.vozila_po_gorivu);
+  renderPie('pieComplaintsStatus', 'legendComplaintsStatus', c.prituzbe_po_statusu);
+  renderPie('pieComplaintsCategory', 'legendComplaintsCategory', c.prituzbe_po_kategoriji);
+  renderPie('pieFinesStatus', 'legendFinesStatus', c.prekrsaji_po_statusu);
+  renderPie('pieServicesType', 'legendServicesType', c.servisi_po_vrsti);
+  renderPie('pieEmployeesRole', 'legendEmployeesRole', c.zaposlenici_po_ulozi);
+  renderPie('pieTicketsType', 'legendTicketsType', c.prodane_karte_po_tipu);
+}
+
 function setPie(pieId, segments) {
   const pie = el(pieId);
   if (!pie) return;
@@ -90,47 +164,6 @@ function setPie(pieId, segments) {
   pie.style.background = `conic-gradient(${parts.join(',')})`;
 }
 
-function updateDashboardPies(d) {
-  const inPromet = Number(d.vozila?.u_prometu ?? 0);
-  const vanPrometa = Number(d.vozila?.van_prometa ?? 0);
-
-  const novo = Number(d.complaints?.novo ?? 0);
-  const uObradi = Number(d.complaints?.u_obradi ?? 0);
-
-  const neplaceno = Number(d.fines?.neplaceno ?? 0);
-  const uPostupku = Number(d.fines?.u_postupku ?? 0);
-
-  const vehiclesInVal = el('pieVehiclesInVal');
-  const vehiclesOutVal = el('pieVehiclesOutVal');
-  if (vehiclesInVal) vehiclesInVal.textContent = String(inPromet);
-  if (vehiclesOutVal) vehiclesOutVal.textContent = String(vanPrometa);
-
-  const cNewVal = el('pieComplaintsNewVal');
-  const cInVal = el('pieComplaintsInVal');
-  if (cNewVal) cNewVal.textContent = String(novo);
-  if (cInVal) cInVal.textContent = String(uObradi);
-
-  const fUnpaidVal = el('pieFinesUnpaidVal');
-  const fProcVal = el('pieFinesProcessVal');
-  if (fUnpaidVal) fUnpaidVal.textContent = String(neplaceno);
-  if (fProcVal) fProcVal.textContent = String(uPostupku);
-
-  setPie('pieVehicles', [
-    { value: inPromet, color: '#22c55e' },
-    { value: vanPrometa, color: '#64748b' },
-  ]);
-
-  setPie('pieComplaints', [
-    { value: novo, color: '#3b82f6' },
-    { value: uObradi, color: '#f59e0b' },
-  ]);
-
-  setPie('pieFines', [
-    { value: neplaceno, color: '#ef4444' },
-    { value: uPostupku, color: '#f59e0b' },
-  ]);
-}
-
 function wireTabs() {
   const tabs = Array.from(document.querySelectorAll('.tab'));
   tabs.forEach((t) => {
@@ -142,26 +175,6 @@ function wireTabs() {
       el(`panel-${id}`).classList.remove('hidden');
     };
   });
-}
-
-async function loadDashboard() {
-  const d = await api('/ops/dashboard');
-
-  el('dVozilaPromet').textContent = String(d.vozila?.u_prometu ?? 0);
-  el('dVozilaMeta').textContent = `Van prometa: ${d.vozila?.van_prometa ?? 0} / Ukupno: ${d.vozila?.ukupno ?? 0}`;
-
-  el('dPrituzbeNovo').textContent = String(d.complaints?.novo ?? 0);
-  el('dPrituzbeMeta').textContent = `U obradi: ${d.complaints?.u_obradi ?? 0}`;
-
-  const nepl = Number(d.fines?.neplaceno ?? 0);
-  const uPost = Number(d.fines?.u_postupku ?? 0);
-  el('dKazneNeplac').textContent = String(nepl + uPost);
-  el('dKazneMeta').textContent = `Neplaćeno: ${nepl} / U postupku: ${uPost}`;
-
-  el('dServisiMjesec').textContent = String(d.services?.ovaj_mjesec ?? 0);
-  el('dPolasciUkupno').textContent = String(d.timetable?.ukupno_polazaka ?? 0);
-
-  updateDashboardPies(d);
 }
 
 async function loadLines() {

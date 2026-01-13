@@ -1,60 +1,104 @@
-import express from "express";
-import { pool } from "./db.js";
+import express from 'express';
+import { pool } from './db.js';
 
 export const opsRouter = express.Router();
 
-const ALLOWED_COMPLAINT_STATUS = ["Novo", "U obradi", "Riješeno", "Odbačeno"];
-const ALLOWED_FINE_STATUS = ["Plaćeno", "Neplaćeno", "U postupku"];
-const ALLOWED_SERVICE_TYPE = ["Redovni", "Izvanredni", "Tehnički pregled", "Popravak kvar"];
+const ALLOWED_COMPLAINT_STATUS = ['Novo', 'U obradi', 'Riješeno', 'Odbačeno'];
+const ALLOWED_FINE_STATUS = ['Plaćeno', 'Neplaćeno', 'U postupku'];
+const ALLOWED_SERVICE_TYPE = ['Redovni', 'Izvanredni', 'Tehnički pregled', 'Popravak kvar'];
 
 function toInt(v) {
   const n = Number(v);
   return Number.isFinite(n) ? n : null;
 }
 
-opsRouter.get("/dashboard", async (req, res) => {
-  const [[vozila]] = await pool.query(
-    `SELECT
-      SUM(CASE WHEN u_prometu = 1 THEN 1 ELSE 0 END) AS u_prometu,
-      SUM(CASE WHEN u_prometu = 0 THEN 1 ELSE 0 END) AS van_prometa,
-      COUNT(*) AS ukupno
-     FROM vozila`
-  );
+opsRouter.get('/dashboard', async (req, res) => {
+  try {
+    // KPI: vozila u prometu
+    const [[vozila]] = await pool.query(
+      `SELECT
+        SUM(CASE WHEN u_prometu = 1 THEN 1 ELSE 0 END) AS u_prometu,
+        SUM(CASE WHEN u_prometu = 0 THEN 1 ELSE 0 END) AS van_prometa,
+        COUNT(*) AS ukupno
+      FROM vozila`
+    );
 
-  const [[complaints]] = await pool.query(
-    `SELECT
-      SUM(CASE WHEN status_rjesavanja = 'Novo' THEN 1 ELSE 0 END) AS novo,
-      SUM(CASE WHEN status_rjesavanja = 'U obradi' THEN 1 ELSE 0 END) AS u_obradi
-     FROM prituzbe`
-  );
+    // 1) Vozila po gorivu
+    const [vozilaPoGorivu] = await pool.query(
+      `SELECT vrsta_goriva AS label, COUNT(*) AS value
+       FROM vozila
+       GROUP BY vrsta_goriva
+       ORDER BY value DESC, label ASC`
+    );
 
-  const [[fines]] = await pool.query(
-    `SELECT
-      SUM(CASE WHEN status_placanja = 'Neplaćeno' THEN 1 ELSE 0 END) AS neplaceno,
-      SUM(CASE WHEN status_placanja = 'U postupku' THEN 1 ELSE 0 END) AS u_postupku
-     FROM prekrsaji`
-  );
+    // 2) Pritužbe po statusu
+    const [prituzbePoStatusu] = await pool.query(
+      `SELECT status_rjesavanja AS label, COUNT(*) AS value
+       FROM prituzbe
+       GROUP BY status_rjesavanja
+       ORDER BY value DESC, label ASC`
+    );
 
-  const [[services]] = await pool.query(
-    `SELECT
-      COUNT(*) AS ovaj_mjesec
-     FROM odrzavanje_vozila
-     WHERE YEAR(datum_servisa) = YEAR(CURDATE())
-       AND MONTH(datum_servisa) = MONTH(CURDATE())`
-  );
+    // 3) Pritužbe po kategoriji
+    const [prituzbePoKategoriji] = await pool.query(
+      `SELECT kategorija_prituzbe AS label, COUNT(*) AS value
+       FROM prituzbe
+       GROUP BY kategorija_prituzbe
+       ORDER BY value DESC, label ASC`
+    );
 
-  const [[timetable]] = await pool.query(`SELECT COUNT(*) AS ukupno_polazaka FROM vozni_red`);
+    // 4) Prekršaji po statusu
+    const [prekrsajiPoStatusu] = await pool.query(
+      `SELECT status_placanja AS label, COUNT(*) AS value
+       FROM prekrsaji
+       GROUP BY status_placanja
+       ORDER BY value DESC, label ASC`
+    );
 
-  res.json({
-    vozila,
-    complaints,
-    fines,
-    services,
-    timetable
-  });
+    // 5) Servisi po vrsti
+    const [servisiPoVrsti] = await pool.query(
+      `SELECT vrsta_servisa AS label, COUNT(*) AS value
+       FROM odrzavanje_vozila
+       GROUP BY vrsta_servisa
+       ORDER BY value DESC, label ASC`
+    );
+
+    // 6) Zaposlenici po ulozi
+    const [zaposleniciPoUlozi] = await pool.query(
+      `SELECT naziv_uloge AS label, COUNT(*) AS value
+       FROM zaposlenik
+       GROUP BY naziv_uloge
+       ORDER BY value DESC, label ASC`
+    );
+
+    // 7) Prodane karte po tipu
+    const [kartePoTipu] = await pool.query(
+      `SELECT tk.tip_naziv AS label, COUNT(*) AS value
+       FROM karta k
+       JOIN tip_karte tk ON tk.id = k.tip_karte_id
+       GROUP BY tk.id, tk.tip_naziv
+       ORDER BY value DESC, tk.tip_naziv ASC`
+    );
+
+    res.json({
+      vozila,
+      charts: {
+        vozila_po_gorivu: vozilaPoGorivu,
+        prituzbe_po_statusu: prituzbePoStatusu,
+        prituzbe_po_kategoriji: prituzbePoKategoriji,
+        prekrsaji_po_statusu: prekrsajiPoStatusu,
+        servisi_po_vrsti: servisiPoVrsti,
+        zaposlenici_po_ulozi: zaposleniciPoUlozi,
+        prodane_karte_po_tipu: kartePoTipu,
+      },
+    });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: e.message || 'Dashboard error' });
+  }
 });
 
-opsRouter.get("/lines", async (req, res) => {
+opsRouter.get('/lines', async (req, res) => {
   const [rows] = await pool.query(
     `SELECT id, oznaka, naziv, tip_linije
      FROM linije
@@ -63,7 +107,7 @@ opsRouter.get("/lines", async (req, res) => {
   res.json({ rows });
 });
 
-opsRouter.get("/vehicles", async (req, res) => {
+opsRouter.get('/vehicles', async (req, res) => {
   const [rows] = await pool.query(
     `SELECT id, tip_vozila, u_prometu, vrsta_goriva, kapacitet_putnika
      FROM vozila
@@ -72,7 +116,7 @@ opsRouter.get("/vehicles", async (req, res) => {
   res.json({ rows });
 });
 
-opsRouter.get("/mechanics", async (req, res) => {
+opsRouter.get('/mechanics', async (req, res) => {
   const [rows] = await pool.query(
     `SELECT id, CONCAT(ime, ' ', prezime) AS label
      FROM zaposlenik
@@ -82,9 +126,9 @@ opsRouter.get("/mechanics", async (req, res) => {
   res.json({ rows });
 });
 
-opsRouter.get("/timetable", async (req, res) => {
+opsRouter.get('/timetable', async (req, res) => {
   const linijaId = toInt(req.query.linija_id);
-  if (!linijaId || linijaId <= 0) return res.status(400).json({ error: "linija_id je obavezan." });
+  if (!linijaId || linijaId <= 0) return res.status(400).json({ error: 'linija_id je obavezan.' });
 
   const [[line]] = await pool.query(
     `SELECT id, oznaka, naziv, tip_linije
@@ -124,28 +168,28 @@ opsRouter.get("/timetable", async (req, res) => {
   res.json({ line: line || null, rows, stops });
 });
 
-opsRouter.get("/complaints", async (req, res) => {
-  const status = req.query.status ? String(req.query.status) : "";
-  const kategorija = req.query.kategorija ? String(req.query.kategorija) : "";
+opsRouter.get('/complaints', async (req, res) => {
+  const status = req.query.status ? String(req.query.status) : '';
+  const kategorija = req.query.kategorija ? String(req.query.kategorija) : '';
   const linijaId = req.query.linija_id ? toInt(req.query.linija_id) : null;
 
   const where = [];
   const params = [];
 
   if (status) {
-    where.push("pr.status_rjesavanja = ?");
+    where.push('pr.status_rjesavanja = ?');
     params.push(status);
   }
   if (kategorija) {
-    where.push("pr.kategorija_prituzbe = ?");
+    where.push('pr.kategorija_prituzbe = ?');
     params.push(kategorija);
   }
   if (linijaId) {
-    where.push("pr.linija_id = ?");
+    where.push('pr.linija_id = ?');
     params.push(linijaId);
   }
 
-  const sqlWhere = where.length ? `WHERE ${where.join(" AND ")}` : "";
+  const sqlWhere = where.length ? `WHERE ${where.join(' AND ')}` : '';
 
   const [rows] = await pool.query(
     `SELECT
@@ -170,13 +214,13 @@ opsRouter.get("/complaints", async (req, res) => {
   res.json({ rows });
 });
 
-opsRouter.patch("/complaints/:id", async (req, res) => {
+opsRouter.patch('/complaints/:id', async (req, res) => {
   const id = toInt(req.params.id);
-  const status = req.body?.status_rjesavanja ? String(req.body.status_rjesavanja) : "";
+  const status = req.body?.status_rjesavanja ? String(req.body.status_rjesavanja) : '';
 
-  if (!id) return res.status(400).json({ error: "id je obavezan." });
+  if (!id) return res.status(400).json({ error: 'id je obavezan.' });
   if (!ALLOWED_COMPLAINT_STATUS.includes(status)) {
-    return res.status(400).json({ error: "Neispravan status_rjesavanja." });
+    return res.status(400).json({ error: 'Neispravan status_rjesavanja.' });
   }
 
   const [result] = await pool.query(
@@ -189,28 +233,28 @@ opsRouter.patch("/complaints/:id", async (req, res) => {
   res.json({ ok: true, affectedRows: result.affectedRows });
 });
 
-opsRouter.get("/fines", async (req, res) => {
-  const status = req.query.status ? String(req.query.status) : "";
-  const from = req.query.from ? String(req.query.from) : "";
-  const to = req.query.to ? String(req.query.to) : "";
+opsRouter.get('/fines', async (req, res) => {
+  const status = req.query.status ? String(req.query.status) : '';
+  const from = req.query.from ? String(req.query.from) : '';
+  const to = req.query.to ? String(req.query.to) : '';
 
   const where = [];
   const params = [];
 
   if (status) {
-    where.push("p.status_placanja = ?");
+    where.push('p.status_placanja = ?');
     params.push(status);
   }
   if (from) {
-    where.push("p.datum_prekrsaja >= ?");
+    where.push('p.datum_prekrsaja >= ?');
     params.push(from);
   }
   if (to) {
-    where.push("p.datum_prekrsaja <= ?");
+    where.push('p.datum_prekrsaja <= ?');
     params.push(to);
   }
 
-  const sqlWhere = where.length ? `WHERE ${where.join(" AND ")}` : "";
+  const sqlWhere = where.length ? `WHERE ${where.join(' AND ')}` : '';
 
   const [rows] = await pool.query(
     `SELECT
@@ -232,12 +276,12 @@ opsRouter.get("/fines", async (req, res) => {
   res.json({ rows });
 });
 
-opsRouter.patch("/fines/:id", async (req, res) => {
+opsRouter.patch('/fines/:id', async (req, res) => {
   const id = toInt(req.params.id);
-  const status = req.body?.status_placanja ? String(req.body.status_placanja) : "";
+  const status = req.body?.status_placanja ? String(req.body.status_placanja) : '';
 
-  if (!id) return res.status(400).json({ error: "id je obavezan." });
-  if (!ALLOWED_FINE_STATUS.includes(status)) return res.status(400).json({ error: "Neispravan status_placanja." });
+  if (!id) return res.status(400).json({ error: 'id je obavezan.' });
+  if (!ALLOWED_FINE_STATUS.includes(status)) return res.status(400).json({ error: 'Neispravan status_placanja.' });
 
   const [result] = await pool.query(
     `UPDATE prekrsaji
@@ -249,28 +293,28 @@ opsRouter.patch("/fines/:id", async (req, res) => {
   res.json({ ok: true, affectedRows: result.affectedRows });
 });
 
-opsRouter.get("/maintenance", async (req, res) => {
-  const vrsta = req.query.vrsta ? String(req.query.vrsta) : "";
-  const from = req.query.from ? String(req.query.from) : "";
-  const to = req.query.to ? String(req.query.to) : "";
+opsRouter.get('/maintenance', async (req, res) => {
+  const vrsta = req.query.vrsta ? String(req.query.vrsta) : '';
+  const from = req.query.from ? String(req.query.from) : '';
+  const to = req.query.to ? String(req.query.to) : '';
 
   const where = [];
   const params = [];
 
   if (vrsta) {
-    where.push("o.vrsta_servisa = ?");
+    where.push('o.vrsta_servisa = ?');
     params.push(vrsta);
   }
   if (from) {
-    where.push("o.datum_servisa >= ?");
+    where.push('o.datum_servisa >= ?');
     params.push(from);
   }
   if (to) {
-    where.push("o.datum_servisa <= ?");
+    where.push('o.datum_servisa <= ?');
     params.push(to);
   }
 
-  const sqlWhere = where.length ? `WHERE ${where.join(" AND ")}` : "";
+  const sqlWhere = where.length ? `WHERE ${where.join(' AND ')}` : '';
 
   const [rows] = await pool.query(
     `SELECT
@@ -295,22 +339,23 @@ opsRouter.get("/maintenance", async (req, res) => {
   res.json({ rows });
 });
 
-opsRouter.post("/maintenance", async (req, res) => {
+opsRouter.post('/maintenance', async (req, res) => {
   const voziloId = toInt(req.body?.vozilo_id);
   const zaposlenikId = toInt(req.body?.zaposlenik_id);
-  const datum = req.body?.datum_servisa ? String(req.body.datum_servisa) : "";
-  const vrsta = req.body?.vrsta_servisa ? String(req.body.vrsta_servisa) : "";
+  const datum = req.body?.datum_servisa ? String(req.body.datum_servisa) : '';
+  const vrsta = req.body?.vrsta_servisa ? String(req.body.vrsta_servisa) : '';
   const trosak = req.body?.trosak_servisa;
 
-  const opis = req.body?.opis_radova ? String(req.body.opis_radova) : "";
+  const opis = req.body?.opis_radova ? String(req.body.opis_radova) : '';
 
-  if (!voziloId) return res.status(400).json({ error: "vozilo_id je obavezan." });
-  if (!zaposlenikId) return res.status(400).json({ error: "zaposlenik_id je obavezan." });
-  if (!datum) return res.status(400).json({ error: "datum_servisa je obavezan." });
-  if (!ALLOWED_SERVICE_TYPE.includes(vrsta)) return res.status(400).json({ error: "Neispravan vrsta_servisa." });
+  if (!voziloId) return res.status(400).json({ error: 'vozilo_id je obavezan.' });
+  if (!zaposlenikId) return res.status(400).json({ error: 'zaposlenik_id je obavezan.' });
+  if (!datum) return res.status(400).json({ error: 'datum_servisa je obavezan.' });
+  if (!ALLOWED_SERVICE_TYPE.includes(vrsta)) return res.status(400).json({ error: 'Neispravan vrsta_servisa.' });
 
   const trosakNum = Number(trosak);
-  if (!Number.isFinite(trosakNum) || trosakNum < 0) return res.status(400).json({ error: "trosak_servisa mora biti broj >= 0." });
+  if (!Number.isFinite(trosakNum) || trosakNum < 0)
+    return res.status(400).json({ error: 'trosak_servisa mora biti broj >= 0.' });
 
   const [result] = await pool.query(
     `INSERT INTO odrzavanje_vozila (vozilo_id, zaposlenik_id, datum_servisa, vrsta_servisa, trosak_servisa, opis_radova)
