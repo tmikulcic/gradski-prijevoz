@@ -10,8 +10,12 @@
 }
 
 body {
-  background: var(--bg) !important;
   color: var(--text) !important;
+  background-image: url('./images/buses.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
 }
 
 .muted {
