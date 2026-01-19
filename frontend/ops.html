@@ -36,14 +36,6 @@
             <div class="panel__title">Dashboard</div>
             <div class="panel__hint muted">Sažetak ključnih pokazatelja</div>
           </div>
-
-          <div class="panel__actions">
-            <div class="kpi">
-              <div class="kpi__label muted">Vozila u prometu</div>
-              <div class="kpi__value" id="kpiVehiclesInTraffic">—</div>
-              <div class="kpi__sub muted" id="kpiVehiclesMeta">—</div>
-            </div>
-          </div>
         </div>
 
         <div class="dashGrid">
@@ -57,6 +49,15 @@
               <div class="chartRow">
                 <div class="pie" id="pieVehiclesFuel"></div>
                 <div class="legend" id="legendVehiclesFuel"></div>
+              </div>
+            </div>
+            <div class="chartCard">
+              <div class="chartCard__head">
+                <div class="chartCard__title">Vozila u prometu</div>
+              </div>
+              <div class="chartRow">
+                <div class="pie" id="pieVehiclesTraffic"></div>
+                <div class="legend" id="legendVehiclesTraffic"></div>
               </div>
             </div>
           </div>

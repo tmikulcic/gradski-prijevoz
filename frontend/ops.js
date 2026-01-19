@@ -119,12 +119,6 @@ async function loadDashboard() {
   const total = Number(d.vozila?.ukupno ?? 0);
   const out = Number(d.vozila?.van_prometa ?? 0);
 
-  const kpi = el('kpiVehiclesInTraffic');
-  if (kpi) kpi.textContent = `${inTraffic} / ${total}`;
-
-  const meta = el('kpiVehiclesMeta');
-  if (meta) meta.textContent = `Van prometa: ${out}`;
-
   const c = d.charts || {};
   renderPie('pieVehiclesFuel', 'legendVehiclesFuel', c.vozila_po_gorivu);
   renderPie('pieComplaintsStatus', 'legendComplaintsStatus', c.prituzbe_po_statusu);
@@ -133,6 +127,10 @@ async function loadDashboard() {
   renderPie('pieServicesType', 'legendServicesType', c.servisi_po_vrsti);
   renderPie('pieEmployeesRole', 'legendEmployeesRole', c.zaposlenici_po_ulozi);
   renderPie('pieTicketsType', 'legendTicketsType', c.prodane_karte_po_tipu);
+  renderPie('pieVehiclesTraffic', 'legendVehiclesTraffic', [
+  { label: 'U prometu', value: inTraffic },
+  { label: 'Van prometa', value: out }
+]);
 }
 
 function setPie(pieId, segments) {
