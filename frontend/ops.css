@@ -1,4 +1,3 @@
-/* Light theme overrides for ops panel (styles.css is dark by default) */
 :root {
   --bg: #f6f7fb;
   --panel: #ffffff;
@@ -83,6 +82,23 @@ body {
   border-radius: 10px;
 }
 
+/* Narrower complaints table */
+.table--complaints {
+  min-width: 0 !important;
+  table-layout: fixed;
+}
+
+.table--complaints th,
+.table--complaints td {
+  white-space: nowrap;
+}
+
+.cell-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .error {
   background: #fff1f2;
   color: #991b1b;
@@ -145,7 +161,6 @@ body {
   border-radius: 14px;
   padding: 10px 12px;
   background: #fff;
-  min-width: 220px;
 }
 
 .kpi__label {

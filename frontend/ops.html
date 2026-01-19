@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="hr">
   <head>
     <meta charset="utf-8" />
@@ -34,7 +34,7 @@
         <div class="panel__head">
           <div>
             <div class="panel__title">Dashboard</div>
-            <div class="panel__hint muted">Sažetak ključnih pokazatelja (bez suvišnih detalja)</div>
+            <div class="panel__hint muted">Sažetak ključnih pokazatelja</div>
           </div>
 
           <div class="panel__actions">
@@ -136,7 +136,7 @@
       </section>
       <section class="panel hidden" id="panel-timetable">
         <div class="panel__head">
-          <div class="panel__title">Vozni red (read-only)</div>
+          <div class="panel__title">Vozni red</div>
           <div class="panel__actions">
             <label class="field">
               <span class="muted">Linija</span>
@@ -195,6 +195,7 @@
                 <option value="Odbačeno">Odbačeno</option>
               </select>
             </label>
+
             <label class="field">
               <span class="muted">Kategorija</span>
               <select id="cCategory" class="input">
@@ -206,31 +207,94 @@
                 <option value="Ostalo">Ostalo</option>
               </select>
             </label>
+
             <label class="field">
               <span class="muted">Linija</span>
               <select id="cLine" class="input"></select>
             </label>
+
             <button id="loadComplaints" class="btn btn--primary" type="button">Traži</button>
           </div>
         </div>
 
         <div class="tableWrap">
-          <table class="table">
+          <table class="table table--complaints">
             <thead>
               <tr>
                 <th>Datum</th>
-                <th>Linija</th>
-                <th>Kategorija</th>
-                <th>Korisnik</th>
                 <th>Status</th>
+                <th>Kategorija</th>
+                <th>Linija</th>
+                <th>Email korisnika</th>
                 <th>Tekst</th>
-                <th>Akcija</th>
               </tr>
             </thead>
             <tbody id="complaintsBody"></tbody>
           </table>
         </div>
       </section>
+
+      <dialog id="complaintModal" class="modal">
+        <form class="modal__card" method="dialog">
+          <div class="modal__head">
+            <div class="modal__title">Detalji pritužbe</div>
+            <button class="btn" value="cancel" type="submit">X</button>
+          </div>
+
+          <div class="fieldsGrid">
+            <label class="field">
+              <span class="muted">ID</span>
+              <input id="cmId" class="input" type="text" readonly />
+            </label>
+
+            <label class="field">
+              <span class="muted">Datum</span>
+              <input id="cmDate" class="input" type="text" readonly />
+            </label>
+
+            <label class="field">
+              <span class="muted">Status</span>
+              <select id="cmStatus" class="input">
+                <option value="Novo">Novo</option>
+                <option value="U obradi">U obradi</option>
+                <option value="Riješeno">Riješeno</option>
+                <option value="Odbačeno">Odbačeno</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span class="muted">Kategorija</span>
+              <input id="cmCategory" class="input" type="text" readonly />
+            </label>
+
+            <label class="field">
+              <span class="muted">Linija</span>
+              <input id="cmLine" class="input" type="text" readonly />
+            </label>
+
+            <label class="field">
+              <span class="muted">Korisnik</span>
+              <input id="cmUser" class="input" type="text" readonly />
+            </label>
+
+            <label class="field">
+              <span class="muted">Email</span>
+              <input id="cmEmail" class="input" type="text" readonly />
+            </label>
+
+            <label class="field field--full">
+              <span class="muted">Tekst pritužbe</span>
+              <textarea id="cmText" class="input" rows="6" readonly></textarea>
+            </label>
+          </div>
+
+          <div class="modal__actions">
+            <button class="btn" value="cancel" type="submit">Zatvori</button>
+            <div class="spacer"></div>
+            <button id="cmSave" class="btn btn--primary" type="button">Spremi status</button>
+          </div>
+        </form>
+      </dialog>
 
       <section class="panel hidden" id="panel-maintenance">
         <div class="panel__head">

@@ -2,6 +2,9 @@ const API_BASE = 'http://localhost:3000/api';
 
 const el = (id) => document.getElementById(id);
 
+let COMPLAINTS_BY_ID = new Map();
+let OPEN_COMPLAINT_ID = null;
+
 async function api(path, options) {
   const res = await fetch(`${API_BASE}${path}`, {
     headers: { 'Content-Type': 'application/json' },
@@ -237,54 +240,103 @@ async function loadTimetable() {
 
 async function loadComplaints() {
   const params = new URLSearchParams();
+
   if (el('cStatus').value) params.set('status', el('cStatus').value);
   if (el('cCategory').value) params.set('kategorija', el('cCategory').value);
   if (el('cLine').value) params.set('linija_id', el('cLine').value);
 
   const data = await api(`/ops/complaints?${params.toString()}`);
   const body = el('complaintsBody');
+
   body.innerHTML = '';
 
   for (const r of data.rows || []) {
-    const line = r.linija_oznaka ? `${r.linija_oznaka} — ${r.linija_naziv}` : '—';
-    const user = `${r.korisnik_ime}${r.korisnik_email ? ' (' + r.korisnik_email + ')' : ''}`;
+    const line = r.linija_oznaka || '—';
+    const email = r.korisnik_email || '—';
 
     const tr = document.createElement('tr');
+
     tr.innerHTML = `
       <td>${fmt(r.datum_prituzbe)}</td>
-      <td>${line}</td>
-      <td>${r.kategorija_prituzbe}</td>
-      <td>${user}</td>
-      <td>${badgeComplaint(r.status_rjesavanja)}</td>
-      <td title="${String(r.tekst_prituzbe || '').replaceAll('"', '&quot;')}">${truncate(r.tekst_prituzbe, 90)}</td>
+
       <td>
-        <select class="input input--small" data-complaint-status data-id="${r.id}">
+        <select class="input input--small" data-status data-id="${r.id}">
           <option value="Novo" ${r.status_rjesavanja === 'Novo' ? 'selected' : ''}>Novo</option>
           <option value="U obradi" ${r.status_rjesavanja === 'U obradi' ? 'selected' : ''}>U obradi</option>
           <option value="Riješeno" ${r.status_rjesavanja === 'Riješeno' ? 'selected' : ''}>Riješeno</option>
           <option value="Odbačeno" ${r.status_rjesavanja === 'Odbačeno' ? 'selected' : ''}>Odbačeno</option>
         </select>
-        <button class="btnLink" data-complaint-save data-id="${r.id}" type="button">Spremi</button>
+      </td>
+
+      <td>${r.kategorija_prituzbe || ''}</td>
+      <td>${line}</td>
+      <td>${email}</td>
+
+      <td title="${(r.tekst_prituzbe || '').replaceAll('"', '&quot;')}">
+        ${truncate(r.tekst_prituzbe, 120)}
       </td>
     `;
+
     body.appendChild(tr);
   }
 
-  body.querySelectorAll('[data-complaint-save]').forEach((btn) => {
-    btn.onclick = async () => {
+  body.querySelectorAll('[data-status]').forEach((select) => {
+    select.onchange = async () => {
       clearError();
-      const id = btn.getAttribute('data-id');
-      const sel = body.querySelector(`[data-complaint-status][data-id="${id}"]`);
-      const status = sel ? sel.value : '';
+
+      const id = select.getAttribute('data-id');
+      const status = select.value;
+
       try {
-        await api(`/ops/complaints/${id}`, { method: 'PATCH', body: JSON.stringify({ status_rjesavanja: status }) });
-        await loadComplaints();
+        await api(`/ops/complaints/${id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ status_rjesavanja: status }),
+        });
+
         await loadDashboard();
       } catch (e) {
         showError(e.message);
       }
     };
   });
+}
+
+function openComplaintModal(id) {
+  const modal = el('complaintModal');
+  const r = COMPLAINTS_BY_ID.get(String(id));
+  if (!modal || !r) return;
+
+  OPEN_COMPLAINT_ID = String(id);
+
+  el('cmId').value = r.id ?? '';
+  el('cmDate').value = fmt(r.datum_prituzbe);
+  el('cmStatus').value = r.status_rjesavanja || 'Novo';
+  el('cmCategory').value = r.kategorija_prituzbe || '';
+
+  const line = r.linija_oznaka ? `${r.linija_oznaka} — ${r.linija_naziv}` : '—';
+  el('cmLine').value = line;
+
+  el('cmUser').value = r.korisnik_ime || '—';
+  el('cmEmail').value = r.korisnik_email || '—';
+  el('cmText').value = r.tekst_prituzbe || '';
+
+  modal.showModal();
+}
+
+async function saveOpenComplaintStatus() {
+  if (!OPEN_COMPLAINT_ID) return;
+  clearError();
+  const id = OPEN_COMPLAINT_ID;
+  const status = el('cmStatus')?.value || 'Novo';
+  try {
+    await api(`/ops/complaints/${id}`, { method: 'PATCH', body: JSON.stringify({ status_rjesavanja: status }) });
+    el('complaintModal')?.close();
+    OPEN_COMPLAINT_ID = null;
+    await loadComplaints();
+    await loadDashboard();
+  } catch (e) {
+    showError(e.message);
+  }
 }
 
 async function loadMaintenance() {
@@ -503,6 +555,15 @@ async function init() {
       showError(e.message);
     }
   };
+
+  const cModal = el('complaintModal');
+  const cSave = el('cmSave');
+  if (cSave) cSave.onclick = saveOpenComplaintStatus;
+  if (cModal) {
+    cModal.addEventListener('close', () => {
+      OPEN_COMPLAINT_ID = null;
+    });
+  }
 
   const modal = el('maintenanceModal');
   el('openAddMaintenance').onclick = async () => {
